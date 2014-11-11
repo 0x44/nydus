@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for net in `cat {{ tinc_confdir }}/non-cn-networks.txt`; do
+{% if ansible_os_family == 'Darwin' %}
+    /sbin/route add $net {{ hostvars[tinc_router].tinc_address }}
+{% elif ansible_os_family == 'Debian' %}
+    /sbin/ip route add $net via {{ hostvars[tinc_router].tinc_address }}
+{% endif %}
+done

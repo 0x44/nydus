@@ -1,0 +1,12 @@
+#jinja2: lstrip_blocks: True
+#!/bin/sh
+
+/sbin/ifconfig $INTERFACE down
+
+{% for address in hostvars[tinc_router].tinc_real_addresses %}
+  {% if ansible_os_family == 'Darwin' %}
+/sbin/route delete {{ address }}
+  {% elif ansible_os_family == 'Debian' %}
+/sbin/ip route delete {{ address }}
+  {% endif %}
+{% endfor %}

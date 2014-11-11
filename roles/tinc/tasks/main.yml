@@ -1,0 +1,92 @@
+---
+- name: install tinc
+  homebrew: name=tinc
+  when: ansible_os_family == 'Darwin'
+
+- name: install tinc
+  apt: name=tinc
+  when: ansible_os_family == 'Debian'
+
+# - name: clear confdir
+#   changed_when: result.stdout != ''
+#   register: result
+#   shell: "/bin/rm -frv {{ tinc_confdir }}/*"
+
+- name: create confdir
+  file:
+    path="{{ tinc_confdir }}/{{ tinc_netname }}/hosts"
+    state=directory
+
+- name: copy netblocks files
+  copy:
+    dest="{{ tinc_confdir }}/{{ item }}"
+    src="{{ item }}"
+  with_items:
+    - non-cn-networks.txt
+
+- name: generate nets.boot
+  template:
+    dest="{{ tinc_confdir }}/nets.boot"
+    src=nets.boot.j2
+  when: ansible_os_family == 'Debian'
+
+- name: generate self host file
+  notify:
+    - reload tinc
+  template:
+    dest="{{ tinc_confdir }}/{{ tinc_netname }}/hosts/{{ tinc_name }}"
+    src=host-self.j2
+
+- name: generate host files
+  notify:
+    - reload tinc
+  template:
+    dest="{{ tinc_confdir }}/{{ tinc_netname }}/hosts/{{ item }}"
+    src=host.j2
+  with_items: tinc_peers
+
+# - name: generate host-up/down scripts
+#   notify:
+#     - reload tinc
+#   template:
+#     dest="{{ tinc_confdir }}/{{ tinc_netname }}/hosts/{{ tinc_router }}-{{ item }}"
+#     mode=0755
+#     src="router-{{ item }}.j2"
+#   with_items:
+#     - down
+#     - up
+
+- name: copy rsa_key.priv
+  copy:
+    dest="{{ tinc_confdir }}/{{ tinc_netname }}/rsa_key.priv"
+    mode=0600
+    src="{{ tinc_name }}.priv"
+  no_log: True
+  notify:
+    - reload tinc
+
+- name: generate tinc-up/down scripts
+  notify:
+    - reload tinc
+  template:
+    dest="{{ tinc_confdir }}/{{ tinc_netname }}/{{ item }}"
+    mode=0755
+    src="{{ item }}.j2"
+  with_items:
+    - tinc-down
+    - tinc-up
+
+- name: generate tinc.conf
+  notify:
+    - reload tinc
+  template:
+    dest="{{ tinc_confdir }}/{{ tinc_netname }}/tinc.conf"
+    src=tinc.conf.j2
+
+- name: ensure tinc is started
+  service:
+    enabled=yes
+    name=tinc
+    pattern=/usr/sbin/tincd
+    state=started
+  when: ansible_os_family == 'Debian'

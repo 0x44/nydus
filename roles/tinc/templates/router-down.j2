@@ -1,0 +1,9 @@
+#!/bin/sh
+
+for net in `cat {{ tinc_confdir }}/non-cn-networks.txt`; do
+{% if ansible_os_family == 'Darwin' %}
+    /sbin/route delete $net
+{% elif ansible_os_family == 'Debian' %}
+    /sbin/ip route delete $net
+{% endif %}
+done

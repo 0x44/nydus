@@ -1,0 +1,8 @@
+{% for address in tinc_real_addresses %}
+Address = {{ address }}
+{% endfor %}
+{% for subnet in tinc_subnets %}
+Subnet = {{ subnet }}
+{% endfor %}
+
+{{ lookup('file', tinc_name + '.pub') }}

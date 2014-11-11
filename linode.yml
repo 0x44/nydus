@@ -1,0 +1,16 @@
+---
+- hosts: localhost
+  gather_facts: False
+  tasks:
+    - name: add a linode
+      linode:
+        api_key="{{ linode_api_key }}"
+        datacenter="{{ linode_datacenter }}"
+        distribution="{{ linode_distribution }}"
+        name="{{ linode_name }}"
+        plan="{{ linode_plan }}"
+        ssh_pub_key="{{ linode_ssh_pub_key }}"
+        wait=yes
+      register: result
+    - name: print linode info
+      debug: msg="{{ result.instance.ipv4 }}"

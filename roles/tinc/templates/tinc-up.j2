@@ -1,0 +1,18 @@
+#jinja2: lstrip_blocks: True
+#!/bin/sh
+
+/sbin/ifconfig $INTERFACE {{ tinc_address }}/{{ tinc_prefix }}
+
+{% if ansible_os_family == 'Darwin' %}
+GW=`/usr/sbin/netstat -nr | /usr/bin/grep ^default | /usr/bin/awk '{ print $2 }'`
+{% elif ansible_os_family == 'Debian' %}
+GW=`/sbin/ip route | /bin/grep ^default | /usr/bin/awk '{ print $3 }'`
+{% endif %}
+
+{% for address in hostvars[tinc_router].tinc_real_addresses %}
+  {% if ansible_os_family == 'Darwin' %}
+/sbin/route add {{ address }} $GW
+  {% elif ansible_os_family == 'Debian' %}
+/sbin/ip route add {{ address }} via $GW
+  {% endif %}
+{% endfor %}

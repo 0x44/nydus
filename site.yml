@@ -1,0 +1,32 @@
+---
+- hosts:
+    - desktop
+    - proxy
+  roles:
+    - tinc
+  sudo: True
+
+- hosts:
+    - linode
+    - mba
+  roles:
+    - tinc
+
+- hosts: linode
+  gather_facts: False
+  tasks:
+    - name: check ip_forward
+      changed_when: False
+      command: /bin/cat /proc/sys/net/ipv4/ip_forward
+      register: result
+    - name: enable ip_forward
+      shell: /bin/echo 1 > /proc/sys/net/ipv4/ip_forward
+      when: result.stdout != '1'
+    - name: check nat
+      changed_when: False
+      command: /sbin/iptables -t nat -C POSTROUTING -o eth0 -j MASQUERADE
+      ignore_errors: True
+      register: result
+    - name: set up nat
+      command: /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+      when: result.rc != 0

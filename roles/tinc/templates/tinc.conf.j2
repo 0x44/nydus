@@ -1,0 +1,7 @@
+Name = {{ tinc_name }}
+{% for peer in tinc_peers %}
+ConnectTo = {{ peer }}
+{% endfor %}
+{% if tinc_device is defined %}
+Device = {{ tinc_device }}
+{% endif %}

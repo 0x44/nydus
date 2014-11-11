@@ -1,0 +1,8 @@
+{% for address in hostvars[item].tinc_real_addresses %}
+Address = {{ address }}
+{% endfor %}
+{% for subnet in hostvars[item].tinc_subnets %}
+Subnet = {{ subnet }}
+{% endfor %}
+
+{{ lookup('file', hostvars[item].tinc_name + '.pub') }}
